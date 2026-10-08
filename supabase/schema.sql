@@ -130,3 +130,18 @@ begin
       t);
   end loop;
 end $$;
+
+-- Eliminar mi cuenta (lo exige Google Play). Borra al usuario de auth; por los "on delete cascade"
+-- se van con él todos sus pacientes, citas, sesiones, paquetes, cobros y ajustes.
+-- security definer: corre con permisos del dueño de la función, pero solo borra a quien la llama.
+create or replace function public.eliminar_mi_cuenta() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Sin sesión';
+  end if;
+  delete from auth.users where id = auth.uid();
+end $$;
+
+revoke all on function public.eliminar_mi_cuenta() from public, anon;
+grant execute on function public.eliminar_mi_cuenta() to authenticated;

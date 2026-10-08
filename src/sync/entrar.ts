@@ -62,6 +62,13 @@ export async function entrarConGoogle(): Promise<boolean> {
   return sesionDesdeUrl(r.url);
 }
 
+/** Para cuentas creadas con contraseña desde el panel de Supabase (por ejemplo, la del revisor de Google Play). */
+export async function entrarConContrasena(correo: string, contrasena: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
+  if (error) throw new Error(error.message);
+}
+
 export async function pedirCodigo(correo: string): Promise<void> {
   if (!supabase) return;
   // El correo puede traer un código (plantilla propia) o un enlace (plantilla de fábrica de Supabase).

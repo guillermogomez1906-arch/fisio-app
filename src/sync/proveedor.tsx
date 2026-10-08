@@ -28,6 +28,8 @@ export interface Respaldo {
   sincronizar: () => Promise<void>;
   /** Cierra sesión y borra los datos del teléfono. */
   salir: () => Promise<void>;
+  /** Borra la cuenta y todos sus datos, en la nube y en el teléfono. No se puede deshacer. */
+  eliminarCuenta: () => Promise<void>;
 }
 
 const Ctx = createContext<Respaldo | null>(null);
@@ -122,9 +124,26 @@ export function ProveedorRespaldo({ children }: { children: ReactNode }) {
     await refrescarEstado();
   }, [db, refrescarEstado]);
 
+  const eliminarCuenta = useCallback(async () => {
+    if (!supabase) return;
+    for (let i = 0; i < 100 && corriendo.current; i++) await new Promise((r) => setTimeout(r, 100));
+    corriendo.current = true;
+    try {
+      // Primero en la nube (si falla, no se toca nada del teléfono), luego aquí.
+      const { error: e } = await supabase.rpc('eliminar_mi_cuenta');
+      if (e) throw new Error(e.message);
+      await supabase.auth.signOut({ scope: 'local' });
+      await borrarDatosLocales(db);
+    } finally {
+      corriendo.current = false;
+    }
+    setVersion((v) => v + 1);
+    await refrescarEstado();
+  }, [db, refrescarEstado]);
+
   const valor = useMemo<Respaldo>(() => ({
-    conNube: nubeConfigurada, sesion, cargandoSesion, sincronizando, restaurando, ultimo, pendientes, error, version, sincronizar, salir,
-  }), [sesion, cargandoSesion, sincronizando, restaurando, ultimo, pendientes, error, version, sincronizar, salir]);
+    conNube: nubeConfigurada, sesion, cargandoSesion, sincronizando, restaurando, ultimo, pendientes, error, version, sincronizar, salir, eliminarCuenta,
+  }), [sesion, cargandoSesion, sincronizando, restaurando, ultimo, pendientes, error, version, sincronizar, salir, eliminarCuenta]);
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
 }

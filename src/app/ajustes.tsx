@@ -7,7 +7,7 @@ import { guardarAjustes, obtenerAjustes } from '@/data/repo';
 import { haceCuanto } from '@/domain/logic';
 import { contarPendientes } from '@/sync/motor';
 import { useRespaldo } from '@/sync/proveedor';
-import { confirmar } from '@/ui/acciones';
+import { avisar, confirmar } from '@/ui/acciones';
 import { Aviso, Boton, Campo, Cargando, Pantalla, T, Tarjeta } from '@/ui/kit';
 import { C, E } from '@/ui/theme';
 
@@ -61,7 +61,7 @@ export default function Ajustes() {
 
 function CuentaYRespaldo() {
   const db = useSQLiteContext();
-  const { conNube, sesion, sincronizando, ultimo, pendientes, error, sincronizar, salir } = useRespaldo();
+  const { conNube, sesion, sincronizando, ultimo, pendientes, error, sincronizar, salir, eliminarCuenta } = useRespaldo();
 
   if (!conNube) {
     return (
@@ -101,6 +101,15 @@ function CuentaYRespaldo() {
       {error ? <Aviso texto={error} /> : null}
       <Boton v="secundario" icono="upload-cloud" texto="Respaldar ahora" deshabilitado={sincronizando} onPress={sincronizar} />
       <Boton v="peligro" icono="log-out" texto="Salir de la cuenta" onPress={cerrarSesion} />
+      <View style={{ height: 1, backgroundColor: C.linea, marginVertical: E.xs }} />
+      <Boton v="peligro" icono="trash-2" texto="Eliminar mi cuenta" onPress={() => confirmar(
+        '¿Eliminar tu cuenta?',
+        'Se borran para siempre tus pacientes, historias clínicas, citas y cobros, en este teléfono y en la nube. No se puede deshacer. Si los necesitas, exporta antes el resumen para tu contador.',
+        'Eliminar para siempre',
+        () => confirmar('¿Seguro?', `Se elimina la cuenta ${sesion?.user.email ?? ''} con todos sus datos.`, 'Sí, eliminar', async () => {
+          try { await eliminarCuenta(); } catch (e) { avisar('No se pudo eliminar', `${(e as Error).message}. Revisa tu conexión e inténtalo de nuevo.`); }
+        }),
+      )} />
     </Tarjeta>
   );
 }

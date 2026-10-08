@@ -62,7 +62,7 @@ pendiente y se sube a la nube al entrar, al abrir la app, al mandarla al fondo y
 está abierta. Si el fisio entra en otro teléfono, baja todo. Si dos teléfonos editan lo mismo, gana el
 último que respalda. Al salir de la cuenta se borran los datos del teléfono (después de respaldarlos).
 
-Configuración, una sola vez:
+Configuración, una sola vez (si `schema.sql` cambia, se vuelve a correr completo; no borra datos):
 
 1. **Proyecto**: crea un proyecto en supabase.com. No hay región en México; la más cercana es
    *East US*. Que los datos estén fuera de México debe decirlo el aviso de privacidad.
@@ -78,7 +78,9 @@ Configuración, una sola vez:
    código: por ejemplo `<p>Tu código para entrar es: <b>{{ .Token }}</b></p>`. El correo que trae Supabase
    de fábrica manda muy pocos mensajes por hora; para usarla con clientes configura un SMTP propio
    (*Authentication → Emails → SMTP Settings*).
-7. **Builds**: para `eas build`, da de alta las mismas dos variables en el proyecto de EAS
+7. **Cuenta para el revisor de Google Play**: en *Authentication → Users → Add user → Create new user*
+   crea un correo y contraseña con *Auto Confirm User*. En la app se entra con "Tengo contraseña".
+8. **Builds**: para `eas build`, da de alta las mismas dos variables en el proyecto de EAS
    (`npx eas-cli@latest env:create`), porque el `.env` no se sube.
 
 ## Pruebas

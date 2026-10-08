@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { entrarConCodigo, entrarConGoogle, googleHabilitado, pedirCodigo } from '@/sync/entrar';
+import { entrarConCodigo, entrarConContrasena, entrarConGoogle, googleHabilitado, pedirCodigo } from '@/sync/entrar';
 import { Aviso, Boton, Campo, T, Tarjeta } from '@/ui/kit';
 import { C, E } from '@/ui/theme';
 
@@ -15,6 +15,7 @@ function explicar(e: unknown): string {
   if (/expired|invalid/i.test(m) && /token|otp|code/i.test(m)) return 'El código no es válido o ya venció. Pide uno nuevo.';
   if (/rate limit|too many|seconds/i.test(m)) return 'Espera un minuto antes de pedir otro código.';
   if (/provider is not enabled|unsupported provider/i.test(m)) return 'La entrada con Google todavía no está activada. Usa tu correo.';
+  if (/invalid login credentials/i.test(m)) return 'Correo o contraseña incorrectos.';
   if (/network|fetch/i.test(m)) return 'Sin conexión. Para entrar la primera vez necesitas internet.';
   return m;
 }
@@ -23,6 +24,8 @@ export default function Entrar() {
   const [correo, setCorreo] = useState('');
   const [codigo, setCodigo] = useState('');
   const [codigoEnviado, setCodigoEnviado] = useState(false);
+  const [conContrasena, setConContrasena] = useState(false);
+  const [contrasena, setContrasena] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conGoogle, setConGoogle] = useState(false);
@@ -68,16 +71,27 @@ export default function Entrar() {
           ) : null}
 
           <Tarjeta style={{ gap: E.m }}>
-            {!codigoEnviado ? (
+            {conContrasena ? (
+              <>
+                <Campo etiqueta="Correo" value={correo} onChangeText={setCorreo} placeholder="tu@correo.com"
+                  keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" onFocus={mostrarCampo} />
+                <Campo etiqueta="Contraseña" value={contrasena} onChangeText={setContrasena} secureTextEntry
+                  autoCapitalize="none" autoComplete="password" textContentType="password" onFocus={mostrarCampo} />
+                <Boton texto="Entrar" deshabilitado={ocupado || !correoValido(correo) || !contrasena}
+                  onPress={() => correr(() => entrarConContrasena(correo.trim(), contrasena))} />
+                <Boton v="fantasma" texto="Entrar con código por correo" onPress={() => { setConContrasena(false); setError(null); }} style={{ minHeight: 40 }} />
+              </>
+            ) : !codigoEnviado ? (
               <>
                 <Campo etiqueta="Correo" value={correo} onChangeText={setCorreo} placeholder="tu@correo.com"
                   keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" onFocus={mostrarCampo} />
                 <Boton v="secundario" texto="Mandarme un código" deshabilitado={ocupado || !correoValido(correo)}
                   onPress={() => correr(async () => { await pedirCodigo(correo.trim()); setCodigoEnviado(true); })} />
+                <Boton v="fantasma" texto="Tengo contraseña" onPress={() => { setConContrasena(true); setError(null); }} style={{ minHeight: 40 }} />
               </>
             ) : (
               <>
-                <T v="tenue">Te mandamos un correo a {correo.trim()}. Ábrelo en este teléfono y toca el enlace, o escribe aquí el código si viene uno. Revisa también spam.</T>
+                <T v="tenue">Te mandamos un código a {correo.trim()}. Si no lo ves, revisa la carpeta de no deseados.</T>
                 <Campo etiqueta="Código" value={codigo} onChangeText={(t) => setCodigo(t.replace(/\D/g, ''))} placeholder="123456"
                   keyboardType="number-pad" maxLength={10} autoComplete="one-time-code" textContentType="oneTimeCode" autoFocus onFocus={mostrarCampo} />
                 <Boton texto="Entrar" deshabilitado={ocupado || codigo.length < 6}
