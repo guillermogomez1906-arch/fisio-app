@@ -64,7 +64,7 @@ export default function Entrar() {
               </>
             ) : (
               <>
-                <T v="tenue">Te mandamos un código a {correo.trim()}. Revisa también la carpeta de spam.</T>
+                <T v="tenue">Te mandamos un correo a {correo.trim()}. Ábrelo en este teléfono y toca el enlace, o escribe aquí el código si viene uno. Revisa también spam.</T>
                 <Campo etiqueta="Código" value={codigo} onChangeText={(t) => setCodigo(t.replace(/\D/g, ''))} placeholder="123456"
                   keyboardType="number-pad" maxLength={10} autoComplete="one-time-code" textContentType="oneTimeCode" autoFocus />
                 <Boton texto="Entrar" deshabilitado={ocupado || codigo.length < 6}

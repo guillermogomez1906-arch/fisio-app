@@ -49,7 +49,12 @@ export async function entrarConGoogle(): Promise<boolean> {
 
 export async function pedirCodigo(correo: string): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.auth.signInWithOtp({ email: correo, options: { shouldCreateUser: true } });
+  // El correo puede traer un código (plantilla propia) o un enlace (plantilla de fábrica de Supabase).
+  // El enlace regresa a la app por /auth con la sesión, si se abre en este mismo teléfono.
+  const { error } = await supabase.auth.signInWithOtp({
+    email: correo,
+    options: { shouldCreateUser: true, emailRedirectTo: urlRegreso() },
+  });
   if (error) throw new Error(error.message);
 }
 
