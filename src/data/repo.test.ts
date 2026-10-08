@@ -4,35 +4,15 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
 
 import { migrar } from './db';
+import { abrirBdPrueba as abrir } from './sqlite-node';
 import {
   actualizarPaciente, cargarEjemplo, citasDelDia, cobrarCita, cobrosDelMes, crearCita, crearPaciente,
   guardarSesion, listarPacientes, marcarRecordatorio, obtenerAjustes, obtenerCita, obtenerPaciente,
   paquetesDePaciente, sesionesDePaciente, venderPaquete, guardarAjustes,
 } from './repo';
 import { resumenMes, sumarDias } from '../domain/logic';
-
-const norm = (args: unknown[]): unknown[] => (args.length === 1 && Array.isArray(args[0]) ? (args[0] as unknown[]) : args);
-
-function abrir() {
-  const raw = new DatabaseSync(':memory:');
-  const db = {
-    async execAsync(sql: string) { raw.exec(sql); },
-    async runAsync(sql: string, ...args: unknown[]) {
-      const r = raw.prepare(sql).run(...(norm(args) as never[]));
-      return { changes: Number(r.changes), lastInsertRowId: Number(r.lastInsertRowid) };
-    },
-    async getAllAsync(sql: string, ...args: unknown[]) { return raw.prepare(sql).all(...(norm(args) as never[])); },
-    async getFirstAsync(sql: string, ...args: unknown[]) { return raw.prepare(sql).get(...(norm(args) as never[])) ?? null; },
-    async withTransactionAsync(fn: () => Promise<void>) {
-      raw.exec('BEGIN');
-      try { await fn(); raw.exec('COMMIT'); } catch (e) { raw.exec('ROLLBACK'); throw e; }
-    },
-  };
-  return db as unknown as import('expo-sqlite').SQLiteDatabase;
-}
 
 const HOY = '2026-10-07';
 

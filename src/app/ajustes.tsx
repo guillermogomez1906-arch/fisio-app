@@ -1,10 +1,15 @@
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 
 import { guardarAjustes, obtenerAjustes } from '@/data/repo';
-import { Boton, Campo, Cargando, Pantalla, T, Tarjeta } from '@/ui/kit';
-import { E } from '@/ui/theme';
+import { haceCuanto } from '@/domain/logic';
+import { contarPendientes } from '@/sync/motor';
+import { useRespaldo } from '@/sync/proveedor';
+import { confirmar } from '@/ui/acciones';
+import { Aviso, Boton, Campo, Cargando, Pantalla, T, Tarjeta } from '@/ui/kit';
+import { C, E } from '@/ui/theme';
 
 export default function Ajustes() {
   const db = useSQLiteContext();
@@ -39,6 +44,7 @@ export default function Ajustes() {
 
   return (
     <Pantalla abajo={<Boton texto="Guardar" onPress={guardar} />}>
+      <CuentaYRespaldo />
       <Tarjeta style={{ gap: E.m }}>
         <Campo etiqueta="Tu nombre" value={nombre} onChangeText={setNombre} placeholder="Como lo verán tus pacientes" />
       </Tarjeta>
@@ -50,5 +56,51 @@ export default function Ajustes() {
           ayuda="Se usa para avisarte si no te da tiempo de llegar a un domicilio." />
       </Tarjeta>
     </Pantalla>
+  );
+}
+
+function CuentaYRespaldo() {
+  const db = useSQLiteContext();
+  const { conNube, sesion, sincronizando, ultimo, pendientes, error, sincronizar, salir } = useRespaldo();
+
+  if (!conNube) {
+    return (
+      <Tarjeta>
+        <T v="seccion">Respaldo</T>
+        <T v="tenue">Esta versión guarda todo solo en este teléfono. Falta configurar la nube para tener cuenta y respaldo.</T>
+      </Tarjeta>
+    );
+  }
+
+  const estado = sincronizando
+    ? 'Respaldando…'
+    : pendientes > 0
+      ? `${pendientes} ${pendientes === 1 ? 'cambio' : 'cambios'} por respaldar`
+      : ultimo ? `Todo respaldado · ${haceCuanto(ultimo)}` : 'Aún no se respalda';
+
+  const cerrarSesion = async () => {
+    await sincronizar();
+    const n = await contarPendientes(db);
+    const mensaje = n > 0
+      ? `Hay ${n} cambios sin respaldar (¿sin internet?). Si sales ahora se pierden. Mejor conéctate y espera a que se respalden.`
+      : 'Todo está respaldado. Al salir se borran los datos de este teléfono y vuelven cuando entres de nuevo.';
+    confirmar('¿Salir de tu cuenta?', mensaje, n > 0 ? 'Salir y perderlos' : 'Salir', () => { salir(); });
+  };
+
+  return (
+    <Tarjeta style={{ gap: E.m }}>
+      <T v="seccion">Cuenta y respaldo</T>
+      <View style={{ gap: 2 }}>
+        <T v="chico">Cuenta</T>
+        <T v="fuerte">{sesion?.user.email ?? '—'}</T>
+      </View>
+      <View style={{ gap: 2 }}>
+        <T v="chico">Respaldo</T>
+        <T v="fuerte" style={{ color: pendientes > 0 || error ? C.aviso : C.acento }}>{estado}</T>
+      </View>
+      {error ? <Aviso texto={error} /> : null}
+      <Boton v="secundario" icono="upload-cloud" texto="Respaldar ahora" deshabilitado={sincronizando} onPress={sincronizar} />
+      <Boton v="peligro" icono="log-out" texto="Salir de la cuenta" onPress={cerrarSesion} />
+    </Tarjeta>
   );
 }

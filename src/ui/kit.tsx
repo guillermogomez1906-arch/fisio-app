@@ -9,18 +9,24 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useRespaldo } from '@/sync/proveedor';
+
 import { C, E, R } from './theme';
 
 export type Icono = ComponentProps<typeof Feather>['name'];
 
-/** Carga datos cada vez que la pantalla gana el foco (al volver de otra pantalla). */
+/**
+ * Carga datos cada vez que la pantalla gana el foco (al volver de otra pantalla)
+ * y cuando el respaldo trae cambios de la nube.
+ */
 export function useAlEnfocar<T>(cargar: () => Promise<T>, deps: unknown[]): { datos: T | null; recargar: () => void } {
   const [datos, setDatos] = useState<T | null>(null);
   const [vuelta, setVuelta] = useState(0);
+  const { version } = useRespaldo();
   // La función de carga cambia en cada render; se guarda la última sin volver a disparar la carga.
   const cargarRef = useRef(cargar);
   useEffect(() => { cargarRef.current = cargar; });
-  const clave = JSON.stringify(deps);
+  const clave = JSON.stringify([...deps, version]);
   useFocusEffect(
     useCallback(() => {
       let vivo = true;

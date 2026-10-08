@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/ui": "~57.0.22",
     "@expo/vector-icons": "^15.1.1",
+    "@supabase/supabase-js": "^2.117.3",
     "expo": "~57.0.27",
     "expo-constants": "~57.0.21",
     "expo-device": "~57.0.2",
@@ -47,7 +48,7 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "node --test src/domain/*.test.ts && npm run test:datos",
-    "test:datos": "tsx --test src/data/repo.test.ts"
+    "test:datos": "tsx --test src/data/repo.test.ts src/sync/motor.test.ts"
   },
   "private": true
 }

@@ -147,18 +147,24 @@ export function sesionDeCita(db: SQLiteDatabase, citaId: number): Promise<Sesion
   return db.getFirstAsync<Sesion>('SELECT * FROM sesion WHERE cita_id = ?', citaId);
 }
 
-/** Guarda (o reemplaza) la nota de la sesión de una cita y la marca como atendida. */
+/** Guarda (o corrige) la nota de la sesión de una cita y la marca como atendida. */
 export async function guardarSesion(
   db: SQLiteDatabase,
   s: { cita_id: number; paciente_id: number; fecha: string; dolor: number; trabajo: string; notas: string },
 ): Promise<void> {
   await db.withTransactionAsync(async () => {
-    await db.runAsync('DELETE FROM sesion WHERE cita_id = ?', s.cita_id);
-    await db.runAsync(
-      'INSERT INTO sesion (cita_id, paciente_id, fecha, dolor, trabajo, notas) VALUES (?, ?, ?, ?, ?, ?)',
-      s.cita_id, s.paciente_id, s.fecha, s.dolor, s.trabajo, s.notas,
+    // Se actualiza en lugar de borrar y crear, para que conserve su identidad en el respaldo.
+    const r = await db.runAsync(
+      'UPDATE sesion SET fecha = ?, dolor = ?, trabajo = ?, notas = ? WHERE cita_id = ?',
+      s.fecha, s.dolor, s.trabajo, s.notas, s.cita_id,
     );
-    await db.runAsync("UPDATE cita SET estado = 'atendida' WHERE id = ?", s.cita_id);
+    if (r.changes === 0) {
+      await db.runAsync(
+        'INSERT INTO sesion (cita_id, paciente_id, fecha, dolor, trabajo, notas) VALUES (?, ?, ?, ?, ?, ?)',
+        s.cita_id, s.paciente_id, s.fecha, s.dolor, s.trabajo, s.notas,
+      );
+    }
+    await db.runAsync("UPDATE cita SET estado = 'atendida' WHERE id = ? AND estado <> 'atendida'", s.cita_id);
   });
 }
 

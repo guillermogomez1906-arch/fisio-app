@@ -119,3 +119,13 @@ test('historia incompleta sin nacimiento, diagnóstico o teléfono', () => {
   assert.equal(historiaIncompleta({ nacimiento: '', dx_fisio: 'Lumbalgia', telefono: '33' }), true);
   assert.equal(historiaIncompleta({ nacimiento: '1990-01-01', dx_fisio: ' ', telefono: '33' }), true);
 });
+
+test('hace cuánto se respaldó', async () => {
+  const { haceCuanto } = await import('./logic.ts');
+  const ahora = new Date('2026-10-08T15:00:00Z');
+  assert.equal(haceCuanto('2026-10-08T14:59:30Z', ahora), 'hace un momento');
+  assert.equal(haceCuanto('2026-10-08T14:55:00Z', ahora), 'hace 5 min');
+  assert.equal(haceCuanto('2026-10-08T12:00:00Z', ahora), 'hace 3 h');
+  assert.equal(haceCuanto('2026-10-07T14:00:00Z', ahora), 'ayer');
+  assert.equal(haceCuanto('2026-10-04T15:00:00Z', ahora), 'hace 4 días');
+});

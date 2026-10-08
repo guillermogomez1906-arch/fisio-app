@@ -1,7 +1,8 @@
 import Feather from '@expo/vector-icons/Feather';
 import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { IconoRespaldo } from '@/ui/icono-respaldo';
 import { C } from '@/ui/theme';
 
 export default function TabsLayout() {
@@ -24,11 +25,14 @@ export default function TabsLayout() {
           title: 'Hoy',
           tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />,
           headerRight: () => (
-            <Link href="/ajustes" asChild>
-              <Pressable accessibilityLabel="Ajustes" hitSlop={12} style={{ padding: 10, marginRight: 8 }}>
-                <Feather name="settings" size={22} color={C.tinta} />
-              </Pressable>
-            </Link>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+              <IconoRespaldo />
+              <Link href="/ajustes" asChild>
+                <Pressable accessibilityLabel="Ajustes" hitSlop={12} style={{ padding: 10 }}>
+                  <Feather name="settings" size={22} color={C.tinta} />
+                </Pressable>
+              </Link>
+            </View>
           ),
         }}
       />

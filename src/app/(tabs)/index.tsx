@@ -8,6 +8,7 @@ import {
   cargarEjemplo, citasDelDia, cobradoEnFecha, hayPacientes, marcarRecordatorio, type CitaDetalle,
 } from '@/data/repo';
 import { citasSinMargen, dinero, fechaLarga, isoLocal, mensajeRecordatorio, sumarDias } from '@/domain/logic';
+import { useRespaldo } from '@/sync/proveedor';
 import { abrirWhatsapp } from '@/ui/acciones';
 import { Etiquetas } from '@/ui/etiquetas';
 import { Aviso, Boton, Cargando, Pantalla, T, Tarjeta, Titulo, Vacio, useAlEnfocar } from '@/ui/kit';
@@ -15,6 +16,7 @@ import { C, E } from '@/ui/theme';
 
 export default function Hoy() {
   const db = useSQLiteContext();
+  const { conNube, restaurando } = useRespaldo();
   const hoy = isoLocal();
   const [fecha, setFecha] = useState(hoy);
   const manana = sumarDias(fecha, 1);
@@ -61,10 +63,13 @@ export default function Hoy() {
         <Dato valor={dinero(cobrado)} texto="cobrado" />
       </View>
 
+      {restaurando ? <Aviso tipo="ok" texto="Restaurando tus datos desde tu cuenta…" /> : null}
+
       <Titulo>Agenda</Titulo>
       {citas.length === 0 ? (
-        <Vacio texto={conPacientes ? 'No hay citas este día.' : 'Todavía no tienes pacientes. Agenda tu primera cita o carga datos de ejemplo para conocer la app.'} accion={
-          !conPacientes ? <Boton v="secundario" texto="Cargar datos de ejemplo" onPress={async () => { await cargarEjemplo(db, hoy); recargar(); }} /> : undefined
+        <Vacio texto={conPacientes || restaurando ? 'No hay citas este día.' : 'Todavía no tienes pacientes. Agenda tu primera cita para empezar.'} accion={
+          // Los datos de ejemplo solo en modo local: con cuenta se irían al respaldo.
+          !conPacientes && !conNube ? <Boton v="secundario" texto="Cargar datos de ejemplo" onPress={async () => { await cargarEjemplo(db, hoy); recargar(); }} /> : undefined
         } />
       ) : (
         citas.map((c) => (

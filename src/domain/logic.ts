@@ -199,6 +199,18 @@ export function historiaIncompleta(p: Pick<Paciente, 'nacimiento' | 'dx_fisio' |
   return !p.nacimiento || !p.dx_fisio.trim() || !p.telefono.trim();
 }
 
+/** "hace un momento", "hace 5 min", "hace 2 h", "ayer", "hace 3 días". */
+export function haceCuanto(iso: string, ahora: Date = new Date()): string {
+  const seg = Math.max(0, (ahora.getTime() - new Date(iso).getTime()) / 1000);
+  if (seg < 60) return 'hace un momento';
+  const min = Math.floor(seg / 60);
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? 'ayer' : `hace ${d} días`;
+}
+
 // ---------- Dinero y resumen ----------
 
 export function dinero(n: number): string {
