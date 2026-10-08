@@ -1,6 +1,6 @@
 import Feather from '@expo/vector-icons/Feather';
-import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { entrarConCodigo, entrarConGoogle, googleHabilitado, pedirCodigo } from '@/sync/entrar';
@@ -26,6 +26,9 @@ export default function Entrar() {
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conGoogle, setConGoogle] = useState(false);
+  const scroll = useRef<ScrollView>(null);
+  // El campo está abajo: al enfocarlo, sube la pantalla para que el teclado no lo tape.
+  const mostrarCampo = () => setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 250);
 
   useEffect(() => {
     let vivo = true;
@@ -41,8 +44,8 @@ export default function Entrar() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.fondo }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: E.l }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+        <ScrollView ref={scroll} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: E.l }} keyboardShouldPersistTaps="handled">
           <View style={{ alignItems: 'center', gap: E.s, marginBottom: E.l }}>
             <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: C.acento, alignItems: 'center', justifyContent: 'center' }}>
               <Feather name="activity" size={32} color={C.blanco} />
@@ -68,7 +71,7 @@ export default function Entrar() {
             {!codigoEnviado ? (
               <>
                 <Campo etiqueta="Correo" value={correo} onChangeText={setCorreo} placeholder="tu@correo.com"
-                  keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" />
+                  keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" onFocus={mostrarCampo} />
                 <Boton v="secundario" texto="Mandarme un código" deshabilitado={ocupado || !correoValido(correo)}
                   onPress={() => correr(async () => { await pedirCodigo(correo.trim()); setCodigoEnviado(true); })} />
               </>
@@ -76,7 +79,7 @@ export default function Entrar() {
               <>
                 <T v="tenue">Te mandamos un correo a {correo.trim()}. Ábrelo en este teléfono y toca el enlace, o escribe aquí el código si viene uno. Revisa también spam.</T>
                 <Campo etiqueta="Código" value={codigo} onChangeText={(t) => setCodigo(t.replace(/\D/g, ''))} placeholder="123456"
-                  keyboardType="number-pad" maxLength={10} autoComplete="one-time-code" textContentType="oneTimeCode" autoFocus />
+                  keyboardType="number-pad" maxLength={10} autoComplete="one-time-code" textContentType="oneTimeCode" autoFocus onFocus={mostrarCampo} />
                 <Boton texto="Entrar" deshabilitado={ocupado || codigo.length < 6}
                   onPress={() => correr(() => entrarConCodigo(correo.trim(), codigo))} />
                 <Boton v="fantasma" texto="Usar otro correo" onPress={() => { setCodigoEnviado(false); setCodigo(''); setError(null); }} style={{ minHeight: 40 }} />

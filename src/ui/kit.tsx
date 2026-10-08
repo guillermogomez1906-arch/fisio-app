@@ -4,7 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import {
-  ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,6 +42,8 @@ export function useAlEnfocar<T>(cargar: () => Promise<T>, deps: unknown[]): { da
 export function Pantalla({ children, scroll = true, abajo }: { children: ReactNode; scroll?: boolean; abajo?: ReactNode }) {
   return (
     <SafeAreaView edges={['bottom']} style={s.pantalla}>
+      {/* Con Android de pantalla completa, la ventana ya no se encoge con el teclado: se hace aquí. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
       {scroll ? (
         <ScrollView contentContainerStyle={s.contenido} keyboardShouldPersistTaps="handled">
           {children}
@@ -50,6 +52,7 @@ export function Pantalla({ children, scroll = true, abajo }: { children: ReactNo
         <View style={[s.contenido, { flex: 1 }]}>{children}</View>
       )}
       {abajo ? <View style={s.abajo}>{abajo}</View> : null}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
