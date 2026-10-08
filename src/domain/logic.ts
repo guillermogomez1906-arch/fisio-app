@@ -45,6 +45,30 @@ export function mesLargo(mes: string): string {
   return `${MESES[m - 1]} ${y}`;
 }
 
+/** "2026-10" → "2026-11" (delta meses). */
+export function moverMes(mes: string, delta: number): string {
+  const [y, m] = mes.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1, 12);
+  return `${d.getFullYear()}-${dos(d.getMonth() + 1)}`;
+}
+
+/**
+ * Semanas de un mes (YYYY-MM) para dibujar un calendario que empieza en lunes.
+ * Cada semana tiene 7 fechas ISO; las que no son del mes vienen como null.
+ */
+export function semanasDelMes(mes: string): (string | null)[][] {
+  const [y, m] = mes.split('-').map(Number);
+  const primero = new Date(y, m - 1, 1, 12);
+  const diasMes = new Date(y, m, 0, 12).getDate();
+  const huecos = (primero.getDay() + 6) % 7; // lunes = 0
+  const celdas: (string | null)[] = Array.from({ length: huecos }, () => null);
+  for (let d = 1; d <= diasMes; d++) celdas.push(`${y}-${dos(m)}-${dos(d)}`);
+  while (celdas.length % 7) celdas.push(null);
+  const semanas: (string | null)[][] = [];
+  for (let i = 0; i < celdas.length; i += 7) semanas.push(celdas.slice(i, i + 7));
+  return semanas;
+}
+
 /** Acepta dd/mm/aaaa (o con guiones) y devuelve YYYY-MM-DD, o null si no es una fecha válida. */
 export function parseFechaMx(texto: string): string | null {
   const m = texto.trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);

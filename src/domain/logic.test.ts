@@ -129,3 +129,15 @@ test('hace cuánto se respaldó', async () => {
   assert.equal(haceCuanto('2026-10-07T14:00:00Z', ahora), 'ayer');
   assert.equal(haceCuanto('2026-10-04T15:00:00Z', ahora), 'hace 4 días');
 });
+
+test('calendario del mes empieza en lunes y cambia de año', async () => {
+  const { semanasDelMes, moverMes } = await import('./logic.ts');
+  const oct = semanasDelMes('2026-10'); // 1 de octubre de 2026 es jueves
+  assert.deepEqual(oct[0], [null, null, null, '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']);
+  assert.equal(oct.flat().filter(Boolean).length, 31);
+  assert.ok(oct.every((s) => s.length === 7));
+  assert.deepEqual(semanasDelMes('2026-02').flat().filter(Boolean).length, 28);
+  assert.equal(semanasDelMes('2026-06')[0][0], '2026-06-01'); // empieza en lunes: sin huecos
+  assert.equal(moverMes('2026-12', 1), '2027-01');
+  assert.equal(moverMes('2026-01', -1), '2025-12');
+});

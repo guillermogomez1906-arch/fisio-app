@@ -1,12 +1,14 @@
+import Feather from '@expo/vector-icons/Feather';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { crearCita, crearPaciente, listarPacientes, obtenerAjustes, obtenerPaciente, type PacienteListado } from '@/data/repo';
-import { fechaLarga, formatoFechaMx, horaValida, isoLocal, parseFechaMx, sumarDias } from '@/domain/logic';
+import { fechaLarga, horaValida, isoLocal, sumarDias } from '@/domain/logic';
 import type { Lugar } from '@/domain/types';
 import { avisar } from '@/ui/acciones';
+import { Calendario } from '@/ui/calendario';
 import { Boton, Campo, Opcion, Pantalla, T, Tarjeta } from '@/ui/kit';
 import { C, E } from '@/ui/theme';
 
@@ -23,7 +25,7 @@ export default function NuevaCita() {
   const [telefono, setTelefono] = useState('');
 
   const [fecha, setFecha] = useState(params.fecha ?? hoy);
-  const [fechaTexto, setFechaTexto] = useState(formatoFechaMx(params.fecha ?? hoy));
+  const [verCalendario, setVerCalendario] = useState(false);
   const [hora, setHora] = useState('');
   const [lugar, setLugar] = useState<Lugar>('consultorio');
   const [direccion, setDireccion] = useState('');
@@ -49,16 +51,9 @@ export default function NuevaCita() {
     { iso: sumarDias(hoy, 2), texto: fechaLarga(sumarDias(hoy, 2)).split(' ').slice(0, 2).join(' ') },
   ];
 
-  const cambiarFechaTexto = (t: string) => {
-    setFechaTexto(t);
-    const iso = parseFechaMx(t);
-    if (iso) setFecha(iso);
-  };
-
   const guardar = async () => {
     if (!nuevo && pacienteId == null) return avisar('Elige un paciente', 'O da de alta uno nuevo.');
     if (nuevo && !nombre.trim()) return avisar('Falta el nombre del paciente');
-    if (!parseFechaMx(fechaTexto)) return avisar('Revisa la fecha', 'Escríbela como dd/mm/aaaa.');
     if (!horaValida(hora)) return avisar('Revisa la hora', 'Escríbela en formato de 24 horas, por ejemplo 09:30 o 17:00.');
     if (lugar === 'domicilio' && !direccion.trim()) return avisar('Falta la dirección del domicilio');
 
@@ -112,11 +107,15 @@ export default function NuevaCita() {
         <T v="seccion">Día y hora</T>
         <View style={{ flexDirection: 'row', gap: E.s }}>
           {dias.map((d) => (
-            <Opcion key={d.iso} texto={d.texto} activo={fecha === d.iso} onPress={() => { setFecha(d.iso); setFechaTexto(formatoFechaMx(d.iso)); }} style={{ flex: 1 }} />
+            <Opcion key={d.iso} texto={d.texto} activo={fecha === d.iso} onPress={() => setFecha(d.iso)} style={{ flex: 1 }} />
           ))}
         </View>
-        <Campo etiqueta="Fecha" value={fechaTexto} onChangeText={cambiarFechaTexto} placeholder="dd/mm/aaaa" keyboardType="numbers-and-punctuation"
-          ayuda={parseFechaMx(fechaTexto) ? fechaLarga(fecha) : 'Escríbela como dd/mm/aaaa'} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Elegir fecha en el calendario" onPress={() => setVerCalendario(true)}
+          style={{ minHeight: 48, borderWidth: 1, borderColor: C.linea, borderRadius: 10, paddingHorizontal: 12, backgroundColor: C.campo, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <T style={{ textTransform: 'capitalize' }}>{fechaLarga(fecha)}</T>
+          <Feather name="calendar" size={18} color={C.acento} />
+        </Pressable>
+        <Calendario visible={verCalendario} fecha={fecha} titulo="Fecha de la cita" onElegir={setFecha} onCerrar={() => setVerCalendario(false)} />
         <Campo etiqueta="Hora" value={hora} onChangeText={setHora} placeholder="Ej. 17:00" keyboardType="numbers-and-punctuation" maxLength={5} />
       </Tarjeta>
 

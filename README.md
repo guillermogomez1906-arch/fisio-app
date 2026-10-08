@@ -30,7 +30,28 @@ npx expo start
 ```
 
 La app usa SQLite y vector icons, que ya vienen en Expo Go, así que se puede probar escaneando el QR con
-Expo Go en Android. Para instalarla como app propia: `npx eas-cli@latest build --profile preview --platform android`.
+Expo Go en Android.
+
+### APK para instalar en un teléfono (sin Play Store)
+
+Una vez, para ligar el proyecto con tu cuenta de Expo y darle las llaves de Supabase
+(el `.env` no se sube a la nube de Expo):
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest init
+npx eas-cli@latest env:create --environment preview --name EXPO_PUBLIC_SUPABASE_URL --value https://TU-PROYECTO.supabase.co --visibility plaintext
+npx eas-cli@latest env:create --environment preview --name EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY --value sb_publishable_... --visibility plaintext
+```
+
+Cada vez que quieras un APK nuevo:
+
+```bash
+npx eas-cli@latest build --profile preview --platform android
+```
+
+Al terminar da un enlace y un QR para descargar el APK. En el teléfono hay que permitir instalar apps de
+fuentes desconocidas. Las siguientes versiones se instalan encima sin perder datos.
 
 Sin archivo `.env` corre en **modo local** (sin cuenta ni respaldo). Con `.env` pide entrar.
 

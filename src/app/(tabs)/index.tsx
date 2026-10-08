@@ -10,6 +10,7 @@ import {
 import { citasSinMargen, dinero, fechaLarga, isoLocal, mensajeRecordatorio, sumarDias } from '@/domain/logic';
 import { useRespaldo } from '@/sync/proveedor';
 import { abrirWhatsapp } from '@/ui/acciones';
+import { Calendario } from '@/ui/calendario';
 import { Etiquetas } from '@/ui/etiquetas';
 import { Aviso, Boton, Cargando, Pantalla, T, Tarjeta, Titulo, Vacio, useAlEnfocar } from '@/ui/kit';
 import { C, E } from '@/ui/theme';
@@ -19,6 +20,7 @@ export default function Hoy() {
   const { conNube, restaurando } = useRespaldo();
   const hoy = isoLocal();
   const [fecha, setFecha] = useState(hoy);
+  const [verCalendario, setVerCalendario] = useState(false);
   const manana = sumarDias(fecha, 1);
 
   const { datos, recargar } = useAlEnfocar(async () => {
@@ -48,14 +50,23 @@ export default function Hoy() {
         <Pressable accessibilityLabel="Día anterior" onPress={() => setFecha(sumarDias(fecha, -1))} style={{ padding: 10 }}>
           <Feather name="chevron-left" size={22} color={C.tinta} />
         </Pressable>
-        <Pressable onPress={() => setFecha(hoy)} style={{ alignItems: 'center', flex: 1 }}>
-          <T v="grande" style={{ textTransform: 'capitalize' }}>{fechaLarga(fecha)}</T>
-          {etiquetaDia ? <T v="chico">{etiquetaDia}</T> : <T v="chico" style={{ color: C.acento }}>Volver a hoy</T>}
+        <Pressable accessibilityRole="button" accessibilityLabel="Elegir fecha" onPress={() => setVerCalendario(true)}
+          style={{ alignItems: 'center', flex: 1, paddingVertical: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <T v="grande" style={{ textTransform: 'capitalize' }}>{fechaLarga(fecha)}</T>
+            <Feather name="chevron-down" size={18} color={C.tenue} />
+          </View>
+          {etiquetaDia ? <T v="chico">{etiquetaDia}</T> : null}
         </Pressable>
         <Pressable accessibilityLabel="Día siguiente" onPress={() => setFecha(sumarDias(fecha, 1))} style={{ padding: 10 }}>
           <Feather name="chevron-right" size={22} color={C.tinta} />
         </Pressable>
       </View>
+
+      {fecha !== hoy ? (
+        <Boton v="fantasma" icono="rotate-ccw" texto="Volver a hoy" onPress={() => setFecha(hoy)} style={{ minHeight: 36, alignSelf: 'center' }} />
+      ) : null}
+      <Calendario visible={verCalendario} fecha={fecha} onElegir={setFecha} onCerrar={() => setVerCalendario(false)} />
 
       <View style={{ flexDirection: 'row', gap: E.s }}>
         <Dato valor={String(activas.length)} texto="citas" />

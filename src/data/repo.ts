@@ -109,6 +109,14 @@ export function citasDelDia(db: SQLiteDatabase, fecha: string): Promise<CitaDeta
   return db.getAllAsync<CitaDetalle>(`${SELECT_CITA} WHERE c.fecha = ? ORDER BY c.hora`, fecha);
 }
 
+/** Días de un mes (YYYY-MM) que tienen citas no canceladas, para marcarlos en el calendario. */
+export async function diasConCitas(db: SQLiteDatabase, mes: string): Promise<Set<string>> {
+  const filas = await db.getAllAsync<{ fecha: string }>(
+    "SELECT DISTINCT fecha FROM cita WHERE fecha LIKE ? || '%' AND estado <> 'cancelada'", mes,
+  );
+  return new Set(filas.map((f) => f.fecha));
+}
+
 export function citasDePaciente(db: SQLiteDatabase, pacienteId: number): Promise<CitaDetalle[]> {
   return db.getAllAsync<CitaDetalle>(`${SELECT_CITA} WHERE c.paciente_id = ? ORDER BY c.fecha DESC, c.hora DESC`, pacienteId);
 }
