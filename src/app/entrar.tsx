@@ -1,9 +1,9 @@
 import Feather from '@expo/vector-icons/Feather';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { entrarConCodigo, entrarConGoogle, pedirCodigo } from '@/sync/entrar';
+import { entrarConCodigo, entrarConGoogle, googleHabilitado, pedirCodigo } from '@/sync/entrar';
 import { Aviso, Boton, Campo, T, Tarjeta } from '@/ui/kit';
 import { C, E } from '@/ui/theme';
 
@@ -25,6 +25,13 @@ export default function Entrar() {
   const [codigoEnviado, setCodigoEnviado] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conGoogle, setConGoogle] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    googleHabilitado().then((g) => { if (vivo) setConGoogle(g); });
+    return () => { vivo = false; };
+  }, []);
 
   const correr = async (fn: () => Promise<unknown>) => {
     setOcupado(true);
@@ -46,13 +53,16 @@ export default function Entrar() {
 
           {error ? <Aviso tipo="error" texto={error} /> : null}
 
-          <Boton icono="log-in" texto="Entrar con Google" deshabilitado={ocupado} onPress={() => correr(entrarConGoogle)} />
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: E.m }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: C.linea }} />
-            <T v="chico">o con tu correo</T>
-            <View style={{ flex: 1, height: 1, backgroundColor: C.linea }} />
-          </View>
+          {conGoogle ? (
+            <>
+              <Boton icono="log-in" texto="Entrar con Google" deshabilitado={ocupado} onPress={() => correr(entrarConGoogle)} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: E.m }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: C.linea }} />
+                <T v="chico">o con tu correo</T>
+                <View style={{ flex: 1, height: 1, backgroundColor: C.linea }} />
+              </View>
+            </>
+          ) : null}
 
           <Tarjeta style={{ gap: E.m }}>
             {!codigoEnviado ? (

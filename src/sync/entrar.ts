@@ -34,6 +34,21 @@ export async function sesionDesdeUrl(url: string): Promise<boolean> {
   return true;
 }
 
+/** Pregunta a Supabase si Google está activado, para no mostrar un botón que lleva a un error. */
+export async function googleHabilitado(): Promise<boolean> {
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const llave = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !llave) return false;
+  try {
+    const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: llave } });
+    if (!r.ok) return false;
+    const ajustes = (await r.json()) as { external?: { google?: boolean } };
+    return !!ajustes.external?.google;
+  } catch {
+    return false; // sin internet: se ofrece solo el correo
+  }
+}
+
 export async function entrarConGoogle(): Promise<boolean> {
   if (!supabase) return false;
   const redirectTo = urlRegreso();
